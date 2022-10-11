@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Battleship;
+using Battleships.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Battleships
 {
@@ -20,7 +20,44 @@ namespace Battleships
         // returns: the number of ships sunk by the set of guesses
         public static int Play(string[] ships, string[] guesses)
         {
-            return 0;
+            var celledShips = GetShipsFromString(ships);
+            var cellGuesses = GetGuessesFromString(guesses);
+
+            if (!ValidateCollisions(celledShips))
+                throw new ArgumentException(ExceptionMessages.ShipsCollision);
+
+            foreach (var guess in cellGuesses)
+            {
+                foreach (var ship in celledShips)
+                {
+                    foreach (var cell in ship.Cells)
+                    {
+                        if (cell.IsSame(guess))
+                        {
+                            cell.Shot = true;
+                        }
+                    }
+                }
+            }
+
+            return celledShips.Where(s => s.IsDestroyed()).Count();
+        }
+
+        private static bool ValidateCollisions(IEnumerable<Ship> ships)
+        {
+            var cells = ships.SelectMany(s => s.GetRestrictedCells()).ToList();
+
+            return !cells.IsCollision();
+        }
+
+        private static IEnumerable<Ship> GetShipsFromString(string[] ships)
+        {
+            return ships.Select(s => new Ship(s)).ToList();
+        }
+
+        private static IEnumerable<GameCell> GetGuessesFromString(string[] guesses)
+        {
+            return guesses.Select(g => new GameCell(g)).ToList();
         }
     }
 }
